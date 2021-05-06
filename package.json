@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/gustaver/trafikverket-script#readme",
   "dependencies": {
-    "node-fetch": "^2.6.1"
+    "dotenv": "^9.0.0",
+    "node-fetch": "^2.6.1",
+    "node-pushover": "^1.0.0"
   }
 }

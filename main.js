@@ -1,16 +1,27 @@
 const fetch = require('node-fetch');
 const fs = require('fs');
+const Pushover = require('node-pushover');
+require('dotenv').config()
 
-const [, , SSN] = process.argv;
-const THEORY = process.argv[3] === "true";
-const SEARCH_ALL = process.argv[4] === "true";
-const LICENSE_ID = 5;
+const push = new Pushover({
+  token: process.env.PUSHOVER_TOKEN,
+  user: process.env.PUSHOVER_USER
+});
 
-const locations = JSON.parse(fs.readFileSync("locations.json"));
-
-
-const specificLocations = [
+const locationToId = JSON.parse(fs.readFileSync("locations.json"));
+const theoryLocations = [
+  "Stockholm City",
+  "Södertälje",
+  "Sollentuna",
+  "Järfälla",
+  "Nyköping",
+  "Norrköping",
+  "Eskilstuna",
+  "Uppsala"
+];
+const drivingLocations = [
   "Stockholm City", 
+  "Farsta",
   "Sollentuna",
   "Tullinge",
   "Södertälje",
@@ -28,7 +39,22 @@ const specificLocations = [
   "Örebro",
   "Katrineholm"
 ];
-const searchLocations = SEARCH_ALL ? Object.values(locations) : specificLocations.map(loc => locations[loc]);
+
+const LICENSE_ID = 5;
+const SSN = process.env.SSN;
+
+var [, , TYPE, START_DATE, END_DATE, SEARCH] = process.argv;
+const THEORY = TYPE === "THEORY";
+START_DATE = new Date(START_DATE);
+END_DATE = new Date(END_DATE);
+
+let locations;
+if (SEARCH && SEARCH === "ALL") {
+  locations = Object.keys(locationToId);
+} else {
+  locations = THEORY ? theoryLocations : drivingLocations;
+  locations = locations.map(loc => locationToId[loc]);
+}
 
 function getOccassions(locationId) {
   const body = {
@@ -46,7 +72,7 @@ function getOccassions(locationId) {
       "paymentUrl": null
     },
     "occasionBundleQuery": {
-      "startDate": new Date().toISOString(),
+      "startDate": START_DATE.toISOString(),
       "locationId": locationId,
       "nearbyLocationIds": [],
       "languageId": 13,
@@ -71,9 +97,15 @@ function getOccassions(locationId) {
   });
 }
 
-Promise.all(searchLocations.map(locId => getOccassions(locId)))
+function pushNotify(occasion) {
+  const title = THEORY ? "Kunskapsprov" : "Körprov";
+  const description = `${occasion.locationName} ${occasion.date.toDateString()} ${occasion.time}`; 
+  push.send(title, description);
+}
+
+Promise.all(locations.map(locId => getOccassions(locId)))
   .then(occasions => {
-    occasionsFlat = occasions.flat();
-    occasionsFlat.sort((a, b) => a.date - b.date);
-    occasionsFlat.slice(0, 30).forEach(o => console.log(o));
+    const occassionsFiltered = occasions.flat().filter(occ => occ.date >= START_DATE && occ.date <= END_DATE);
+    // occasionsFlat.sort((a, b) => a.date - b.date);
+    occassionsFiltered.forEach(o => console.log(o));
   });
