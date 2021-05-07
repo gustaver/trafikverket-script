@@ -2,8 +2,10 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 require('dotenv').config()
 
+const NOTIFICATION_DB = "notifiedOccasions.json";
+
 const LOCATION_TO_ID = JSON.parse(fs.readFileSync("locations.json"));
-const NOTIFIED_OCCASIONS = fs.existsSync("notifiedOccasions.json") ? JSON.parse(fs.readFileSync("notifiedOccasions.json")) : [];
+const NOTIFIED_OCCASIONS = fs.existsSync(NOTIFICATION_DB) ? JSON.parse(fs.readFileSync(NOTIFICATION_DB)) : [];
 
 function notified(occasion) {
   return NOTIFIED_OCCASIONS.filter(occ => occ.locationName === occasion.locationName && occ.time === occasion.time && occ.date === occasion.date.toISOString()).length !== 0;
@@ -138,7 +140,7 @@ async function main() {
 
   NOTIFIED_OCCASIONS.push(...pushedOccasions);
 
-  fs.writeFileSync("notifiedOccasions.json", JSON.stringify(NOTIFIED_OCCASIONS));
+  fs.writeFileSync(NOTIFICATION_DB, JSON.stringify(NOTIFIED_OCCASIONS));
 }
 
 main();
