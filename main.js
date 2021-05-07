@@ -3,7 +3,7 @@ const fs = require('fs');
 require('dotenv').config()
 
 const LOCATION_TO_ID = JSON.parse(fs.readFileSync("locations.json"));
-const NOTIFIED_OCCASIONS = JSON.parse(fs.readFileSync("notifiedOccasions.json"));
+const NOTIFIED_OCCASIONS = fs.existsSync("notifiedOccasions.json") ? JSON.parse(fs.readFileSync("notifiedOccasions.json")) : [];
 
 function notified(occasion) {
   return NOTIFIED_OCCASIONS.filter(occ => occ.locationName === occasion.locationName && occ.time === occasion.time && occ.date === occasion.date.toISOString()).length !== 0;
