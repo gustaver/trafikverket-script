@@ -19,11 +19,7 @@ const theoryLocations = [
   "Stockholm City",
   "Södertälje",
   "Sollentuna",
-  "Järfälla",
-  "Nyköping",
-  "Norrköping",
-  "Eskilstuna",
-  "Uppsala"
+  "Järfälla"
 ];
 const drivingLocations = [
   "Stockholm City", 
@@ -48,6 +44,7 @@ const drivingLocations = [
 
 const LICENSE_ID = 5;
 const SSN = process.env.SSN;
+const NOTIFY = true;
 
 var [, , TYPE, START_DATE, END_DATE, SEARCH] = process.argv;
 const THEORY = TYPE === "THEORY";
@@ -130,17 +127,16 @@ async function main() {
   const occassionsFiltered = occasions.flat().filter(occ => occ.date >= START_DATE && occ.date <= END_DATE);
   occassionsFiltered.forEach(occ => console.log(`Found: ${occasionToString(occ)}`));
   
-  const occassionsUnnotified = occassionsFiltered.filter(occ => !notified(occ));
+  if (NOTIFY) {
+    const occassionsUnnotified = occassionsFiltered.filter(occ => !notified(occ));
+    const occasionNotifications = await Promise.all(occassionsUnnotified.map(occ => pushNotify(occ)));
+    const pushedOccasions = occasionNotifications.filter(([, ok]) => ok).map(([occ, ]) => occ);
 
-  const occasionNotifications = await Promise.all(occassionsUnnotified.map(occ => pushNotify(occ)));
+    pushedOccasions.forEach(occ => console.log(`Notified: ${occasionToString(occ)}`));
 
-  const pushedOccasions = occasionNotifications.filter(([, ok]) => ok).map(([occ, ]) => occ);
-
-  pushedOccasions.forEach(occ => console.log(`Notified: ${occasionToString(occ)}`));
-
-  NOTIFIED_OCCASIONS.push(...pushedOccasions);
-
-  fs.writeFileSync(NOTIFICATION_DB, JSON.stringify(NOTIFIED_OCCASIONS));
+    NOTIFIED_OCCASIONS.push(...pushedOccasions);
+    fs.writeFileSync(NOTIFICATION_DB, JSON.stringify(NOTIFIED_OCCASIONS));
+  }
 }
 
 main();
