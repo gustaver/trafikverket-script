@@ -15,47 +15,27 @@ function occasionToString(occasion) {
   return `${occasion.locationName} ${occasion.date.toDateString()} ${occasion.time}`;
 }
 
-const theoryLocations = [
-  "Stockholm City",
-  "Södertälje",
-  "Sollentuna",
-  "Järfälla"
-];
-const drivingLocations = [
-  "Stockholm City", 
-  "Farsta",
-  "Sollentuna",
-  "Tullinge",
-  "Södertälje",
-  "Järfälla",
-  "Strängnäs",
-  "Eskilstuna",
-  "Nynäshamn",
-  "Nyköping",
-  "Norrköping",
-  "Linköping",
-  "Norrtälje 2",
-  "Uppsala",
-  "Enköping",
-  "Västerås",
-  "Örebro",
-  "Katrineholm"
-];
-
-const LICENSE_ID = 5;
 const SSN = process.env.SSN;
 const NOTIFY = true;
 
-var [, , TYPE, START_DATE, END_DATE, SEARCH] = process.argv;
-const THEORY = TYPE === "THEORY";
+var [, , START_DATE, END_DATE, SEARCH] = process.argv;
+const [LICENSE_ID, VEHICLE_TYPE_ID, EXAMINATION_TYPE_ID] = [4, 1, 10];
 START_DATE = new Date(START_DATE);
 END_DATE = new Date(END_DATE);
 
-let locations;
+let locations = [
+  "Tullinge",
+  "Gillinge trafikövningsplats",
+  "Eskilstuna",
+  "Västerås",
+  "Nyköping",
+  "Örebro",
+  "Uppsala",
+  "Norrköping"
+];
 if (SEARCH && SEARCH === "ALL") {
   locations = Object.keys(LOCATION_TO_ID);
 } else {
-  locations = THEORY ? theoryLocations : drivingLocations;
   locations = locations.map(loc => LOCATION_TO_ID[loc]);
 }
 
@@ -82,8 +62,8 @@ async function main() {
         "languageId": 13,
         "tachographTypeId": 1,
         "occasionChoiceId": 1,
-        "vehicleTypeId": 4,
-        "examinationTypeId": THEORY ? 3 : 12
+        "vehicleTypeId": VEHICLE_TYPE_ID,
+        "examinationTypeId": EXAMINATION_TYPE_ID
       }
     }
     const res = await fetch("https://fp.trafikverket.se/boka/occasion-bundles", {
@@ -101,7 +81,7 @@ async function main() {
     }
 
     const data = await res.json();
-    return data.data
+    return data.data.bundles
       .flatMap(occ => occ.occasions.map((o) => {return {date: new Date(o.date), time: o.time, locationName: o.locationName}}));
   }
   
