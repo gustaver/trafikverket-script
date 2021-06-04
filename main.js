@@ -86,7 +86,7 @@ async function main() {
   }
   
   async function pushNotify(occasion) {
-    const title = THEORY ? "Kunskapsprov" : "Körprov";
+    const title = "Körprov";
     const message = occasionToString(occasion);
 
     const params = new URLSearchParams();
